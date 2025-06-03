@@ -1,0 +1,54 @@
+body {
+  font-family: sans-serif;
+  background: #f9f9f9;
+  margin: 0;
+  padding: 1rem;
+  max-width: 800px;
+  margin-inline: auto;
+}
+h1 {
+  text-align: center;
+}
+.search {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 1rem 0;
+  font-size: 1rem;
+}
+.filters {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.filters select,
+.filters input[type="number"] {
+  flex: 1;
+  padding: 0.4rem;
+}
+.oferta {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.oferta img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+.preco {
+  font-weight: bold;
+  color: green;
+  margin-top: 0.5rem;
+}
+a.botao {
+  display: inline-block;
+  margin-top: 0.5rem;
+  background: #0070f3;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 5px;
+  text-decoration: none;
+}
