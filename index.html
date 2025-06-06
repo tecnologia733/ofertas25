@@ -21,7 +21,7 @@
       <input
         type="text"
         id="buscaInput"
-        placeholder="Buscar por texto..."
+        placeholder="Buscar oferta..."
         class="px-3 py-2 border rounded-md text-base w-64"
       />
     </div>
@@ -39,6 +39,23 @@
       const contadorDiv = document.getElementById("contador");
 
       let todasOfertas = [];
+
+      const formatarPreco = (valor) =>
+        new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+          minimumFractionDigits: 2,
+        }).format(valor);
+
+      const formatarData = (dataStr) => {
+        if (!dataStr) return "";
+        const data = new Date(dataStr);
+        return data.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      };
 
       function diasRestantes(dataStr) {
         if (!dataStr) return Infinity;
@@ -86,7 +103,7 @@
         atualizarContador(ofertas);
 
         if (ordenar === "preco") {
-          ofertas.sort((a, b) => parseFloat(a.preco || 0) - parseFloat(b.preco || 0));
+          ofertas.sort((a, b) => parseFloat(a.preco || Infinity) - parseFloat(b.preco || Infinity));
         } else if (ordenar === "vigencia") {
           ofertas.sort((a, b) => diasRestantes(a.vigencia) - diasRestantes(b.vigencia));
         }
@@ -109,14 +126,16 @@
                 ? `<img src="${oferta.imagem}" alt="Imagem" class="rounded-lg mb-2" />`
                 : ""
             }
-            <h3 class="text-lg font-semibold">${oferta.titulo}</h3>
+            <h3 class="text-lg font-semibold">${oferta.titulo || "Sem título"}</h3>
             <p class="text-sm text-gray-700">${oferta.descricao || ""}</p>
-            <p class="text-xl font-bold text-green-600">R$ ${parseFloat(
-              oferta.preco || 0
-            ).toFixed(2)}</p>
+            ${
+              oferta.preco
+                ? `<p class="text-xl font-bold text-green-600">${formatarPreco(oferta.preco)}</p>`
+                : ""
+            }
             ${
               oferta.vigencia
-                ? `<p class="text-sm text-gray-500">Válido até: ${oferta.vigencia}</p>`
+                ? `<p class="text-sm text-gray-500">Válido até: ${formatarData(oferta.vigencia)}</p>`
                 : ""
             }
             ${
@@ -131,7 +150,9 @@
       }
 
       function atualizarMarcas() {
-        const marcas = [...new Set(todasOfertas.map((o) => o.marca).filter(Boolean))];
+        const marcas = [
+          ...new Set(todasOfertas.map((o) => o.marca).filter((m) => m && m.trim())),
+        ];
         marcaFiltro.innerHTML = '<option value="">Todas as marcas</option>';
         marcas.forEach((m) => {
           const opt = document.createElement("option");
