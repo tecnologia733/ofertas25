@@ -1,210 +1,163 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ofertas</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: #f4f4f4;
-    }
-    h1 {
-      text-align: center;
-    }
-    .filtros, .contador {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-    select, input[type="text"] {
-      padding: 0.5rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    .contador span {
-      background: white;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .contador .hoje {
-      background: #ffe0e0;
-      border-left: 4px solid #e53935;
-    }
-    .contador .vencendo {
-      background: #fff8e0;
-      border-left: 4px solid #ff9800;
-    }
-    .ofertas {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-    }
-    .card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-    }
-    .card img {
-      max-width: 100%;
-      border-radius: 10px;
-      margin-bottom: 0.5rem;
-    }
-    .preco {
-      font-weight: bold;
-      font-size: 1.2rem;
-      margin: 0.5rem 0;
-    }
-    .vencendo {
-      background: #fff8e0;
-      border-left: 4px solid #ff9800;
-      padding-left: 0.5rem;
-    }
-    .vence-hoje {
-      background: #ffe0e0;
-      border-left: 4px solid #e53935;
-      padding-left: 0.5rem;
-    }
-  </style>
-</head>
-<body>
-  <h1>Ofertas</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ofertas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 p-4 font-sans">
+    <h1 class="text-2xl font-bold text-center mb-4">Ofertas</h1>
 
-  <div class="filtros">
-    <select id="marcaFiltro">
-      <option value="">Todas as marcas</option>
-    </select>
-    <select id="ordenarPor">
-      <option value="">Ordenar por</option>
-      <option value="preco">Preço (menor primeiro)</option>
-      <option value="vigencia">Vigência (mais próxima primeiro)</option>
-    </select>
-    <input type="text" id="buscaInput" placeholder="Buscar por texto..." />
-  </div>
+    <div class="flex flex-wrap justify-center gap-4 mb-4">
+      <select id="marcaFiltro" class="px-3 py-2 border rounded-md text-base">
+        <option value="">Todas as marcas</option>
+      </select>
+      <select id="ordenarPor" class="px-3 py-2 border rounded-md text-base">
+        <option value="">Ordenar por</option>
+        <option value="preco">Preço (menor primeiro)</option>
+        <option value="vigencia">Vigência (mais próxima primeiro)</option>
+      </select>
+      <input
+        type="text"
+        id="buscaInput"
+        placeholder="Buscar por texto..."
+        class="px-3 py-2 border rounded-md text-base w-64"
+      />
+    </div>
 
-  <div class="contador" id="contador"></div>
+    <div id="contador" class="flex flex-wrap justify-center gap-4 mb-4 text-sm"></div>
 
-  <div class="ofertas" id="ofertasContainer"></div>
+    <div id="ofertasContainer" class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3"></div>
 
-  <script>
-    const API_URL = "https://ofertas-3ee57-default-rtdb.firebaseio.com/ofertas.json";
-    const container = document.getElementById("ofertasContainer");
-    const marcaFiltro = document.getElementById("marcaFiltro");
-    const ordenacao = document.getElementById("ordenarPor");
-    const buscaInput = document.getElementById("buscaInput");
-    const contadorDiv = document.getElementById("contador");
+    <script>
+      const API_URL = "https://ofertas-3ee57-default-rtdb.firebaseio.com/ofertas.json";
+      const container = document.getElementById("ofertasContainer");
+      const marcaFiltro = document.getElementById("marcaFiltro");
+      const ordenacao = document.getElementById("ordenarPor");
+      const buscaInput = document.getElementById("buscaInput");
+      const contadorDiv = document.getElementById("contador");
 
-    let todasOfertas = [];
+      let todasOfertas = [];
 
-    function diasRestantes(dataStr) {
-      if (!dataStr) return Infinity;
-      const hoje = new Date();
-      hoje.setHours(0,0,0,0);
-      const data = new Date(dataStr);
-      data.setHours(0,0,0,0);
-      return Math.floor((data - hoje) / (1000 * 60 * 60 * 24));
-    }
-
-    function atualizarContador(ofertas) {
-      let hoje = 0;
-      let proximosDias = 0;
-
-      ofertas.forEach(o => {
-        const dias = diasRestantes(o.vigencia);
-        if (dias === 0) hoje++;
-        else if (dias > 0 && dias <= 3) proximosDias++;
-      });
-
-      contadorDiv.innerHTML = `
-        <span class="hoje">🔴 Vencem hoje: ${hoje}</span>
-        <span class="vencendo">🟡 Próximos 3 dias: ${proximosDias}</span>
-      `;
-    }
-
-    function renderizarOfertas() {
-      const marca = marcaFiltro.value.toLowerCase();
-      const busca = buscaInput.value.toLowerCase();
-      const ordenar = ordenacao.value;
-
-      container.innerHTML = "";
-
-      let ofertas = todasOfertas
-        .filter(o => o.ativo)
-        .filter(o => diasRestantes(o.vigencia) >= 0)
-        .filter(o => !marca || (o.marca && o.marca.toLowerCase() === marca))
-        .filter(o =>
-          !busca ||
-          (o.titulo && o.titulo.toLowerCase().includes(busca)) ||
-          (o.descricao && o.descricao.toLowerCase().includes(busca))
-        );
-
-      atualizarContador(ofertas);
-
-      if (ordenar === "preco") {
-        ofertas.sort((a, b) => parseFloat(a.preco || 0) - parseFloat(b.preco || 0));
-      } else if (ordenar === "vigencia") {
-        ofertas.sort((a, b) => diasRestantes(a.vigencia) - diasRestantes(b.vigencia));
+      function diasRestantes(dataStr) {
+        if (!dataStr) return Infinity;
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const data = new Date(dataStr);
+        data.setHours(0, 0, 0, 0);
+        return Math.floor((data - hoje) / (1000 * 60 * 60 * 24));
       }
 
-      ofertas.forEach(oferta => {
-        const dias = diasRestantes(oferta.vigencia);
-        const card = document.createElement("div");
-        card.className = "card";
-        if (dias === 0) {
-          card.classList.add("vence-hoje");
-        } else if (dias > 0 && dias <= 3) {
-          card.classList.add("vencendo");
+      function atualizarContador(ofertas) {
+        let hoje = 0;
+        let proximosDias = 0;
+
+        ofertas.forEach((o) => {
+          const dias = diasRestantes(o.vigencia);
+          if (dias === 0) hoje++;
+          else if (dias > 0 && dias <= 3) proximosDias++;
+        });
+
+        contadorDiv.innerHTML = `
+          <span class="bg-red-100 text-red-800 border-l-4 border-red-600 px-4 py-2 rounded shadow">🔴 Vencem hoje: ${hoje}</span>
+          <span class="bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500 px-4 py-2 rounded shadow">🟡 Próximos 3 dias: ${proximosDias}</span>
+        `;
+      }
+
+      function renderizarOfertas() {
+        const marca = marcaFiltro.value.toLowerCase();
+        const busca = buscaInput.value.toLowerCase();
+        const ordenar = ordenacao.value;
+
+        container.innerHTML = "";
+
+        let ofertas = todasOfertas
+          .filter((o) => o.ativo)
+          .filter((o) => diasRestantes(o.vigencia) >= 0)
+          .filter((o) => !marca || (o.marca && o.marca.toLowerCase() === marca))
+          .filter(
+            (o) =>
+              !busca ||
+              (o.titulo && o.titulo.toLowerCase().includes(busca)) ||
+              (o.descricao && o.descricao.toLowerCase().includes(busca))
+          );
+
+        atualizarContador(ofertas);
+
+        if (ordenar === "preco") {
+          ofertas.sort((a, b) => parseFloat(a.preco || 0) - parseFloat(b.preco || 0));
+        } else if (ordenar === "vigencia") {
+          ofertas.sort((a, b) => diasRestantes(a.vigencia) - diasRestantes(b.vigencia));
         }
 
-        card.innerHTML = `
-          ${oferta.imagem ? `<img src="${oferta.imagem}" alt="Imagem">` : ""}
-          <h3>${oferta.titulo}</h3>
-          <p>${oferta.descricao || ""}</p>
-          <p class="preco">R$ ${parseFloat(oferta.preco || 0).toFixed(2)}</p>
-          ${oferta.vigencia ? `<p>Válido até: ${oferta.vigencia}</p>` : ""}
-          ${oferta.link ? `<a href="${oferta.link}" target="_blank">Ver oferta</a>` : ""}
-        `;
-        container.appendChild(card);
-      });
-    }
+        ofertas.forEach((oferta) => {
+          const dias = diasRestantes(oferta.vigencia);
+          const destaque =
+            dias === 0
+              ? "bg-red-100 border-l-4 border-red-600"
+              : dias <= 3
+              ? "bg-yellow-100 border-l-4 border-yellow-500"
+              : "bg-white";
 
-    function atualizarMarcas() {
-      const marcas = [...new Set(todasOfertas.map(o => o.marca).filter(Boolean))];
-      marcaFiltro.innerHTML = '<option value="">Todas as marcas</option>';
-      marcas.forEach(m => {
-        const opt = document.createElement("option");
-        opt.value = m;
-        opt.textContent = m;
-        marcaFiltro.appendChild(opt);
-      });
-    }
+          const card = document.createElement("div");
+          card.className = `rounded-xl shadow p-4 flex flex-col gap-2 ${destaque}`;
 
-    async function carregarDados() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        todasOfertas = Object.values(data || {});
-        atualizarMarcas();
-        renderizarOfertas();
-      } catch (e) {
-        container.innerHTML = "<p>Erro ao carregar dados.</p>";
+          card.innerHTML = `
+            ${
+              oferta.imagem
+                ? `<img src="${oferta.imagem}" alt="Imagem" class="rounded-lg mb-2" />`
+                : ""
+            }
+            <h3 class="text-lg font-semibold">${oferta.titulo}</h3>
+            <p class="text-sm text-gray-700">${oferta.descricao || ""}</p>
+            <p class="text-xl font-bold text-green-600">R$ ${parseFloat(
+              oferta.preco || 0
+            ).toFixed(2)}</p>
+            ${
+              oferta.vigencia
+                ? `<p class="text-sm text-gray-500">Válido até: ${oferta.vigencia}</p>`
+                : ""
+            }
+            ${
+              oferta.link
+                ? `<a href="${oferta.link}" target="_blank" class="text-blue-600 underline text-sm">Ver oferta</a>`
+                : ""
+            }
+          `;
+
+          container.appendChild(card);
+        });
       }
-    }
 
-    marcaFiltro.addEventListener("change", renderizarOfertas);
-    ordenacao.addEventListener("change", renderizarOfertas);
-    buscaInput.addEventListener("input", renderizarOfertas);
+      function atualizarMarcas() {
+        const marcas = [...new Set(todasOfertas.map((o) => o.marca).filter(Boolean))];
+        marcaFiltro.innerHTML = '<option value="">Todas as marcas</option>';
+        marcas.forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = m;
+          marcaFiltro.appendChild(opt);
+        });
+      }
 
-    carregarDados();
-  </script>
-</body>
+      async function carregarDados() {
+        try {
+          const res = await fetch(API_URL);
+          const data = await res.json();
+          todasOfertas = Object.values(data || {});
+          atualizarMarcas();
+          renderizarOfertas();
+        } catch (e) {
+          container.innerHTML = "<p>Erro ao carregar dados.</p>";
+        }
+      }
+
+      marcaFiltro.addEventListener("change", renderizarOfertas);
+      ordenacao.addEventListener("change", renderizarOfertas);
+      buscaInput.addEventListener("input", renderizarOfertas);
+
+      carregarDados();
+    </script>
+  </body>
 </html>
