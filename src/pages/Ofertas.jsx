@@ -73,7 +73,7 @@ export default function Ofertas() {
       <div className="max-w-4xl mx-auto mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <input
           type="text"
-          placeholder="Buscar oferta..."
+          placeholder="Buscar produtos, marcas e muito mais..."
           className="w-full p-2 border border-gray-300 rounded"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
